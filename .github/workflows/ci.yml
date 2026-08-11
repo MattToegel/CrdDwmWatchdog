@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore locked dependencies
+        run: dotnet restore --locked-mode
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Run self-tests
+        shell: pwsh
+        run: dotnet .\bin\Release\net10.0-windows\win-x64\CrdDwmWatchdog.dll --self-test
+
+      - name: Verify guarded restart dry run
+        shell: pwsh
+        run: dotnet .\bin\Release\net10.0-windows\win-x64\CrdDwmWatchdog.dll --dry-run-restart both

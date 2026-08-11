@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>CrdDwmWatchdog</AssemblyName>
+    <RootNamespace>CrdDwmWatchdog</RootNamespace>
+    <Product>CRD &amp; DWM Health Watchdog</Product>
+    <Description>Monitors Chrome Remote Desktop and Desktop Window Manager and offers guarded, user-approved restarts.</Description>
+    <Company>Matt Toegel</Company>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>0.2.0</Version>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <FileVersion>0.2.0.0</FileVersion>
+    <RepositoryUrl>https://github.com/MattToegel/CrdDwmWatchdog</RepositoryUrl>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Velopack" Version="[1.2.0]" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Preserve local historical package trees without compiling their copied source. -->
+    <Compile Remove="dist\**\*.cs;package-test\**\*.cs;source-dist\**\*.cs" />
+  </ItemGroup>
+</Project>

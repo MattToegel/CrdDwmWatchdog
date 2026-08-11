@@ -1,0 +1,32 @@
+# .NET build output
+bin/
+obj/
+publish/
+artifacts/
+Releases/
+
+# Historical/local packaging output
+dist/
+package-test/
+source-dist/
+packaging/
+
+# IDE and user state
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Local tools and signing material
+.tools/
+*.pfx
+*.p12
+*.snk
+*.cer
+*.key
+*.pem
+
+# Operating-system files
+Thumbs.db
+Desktop.ini
+.DS_Store

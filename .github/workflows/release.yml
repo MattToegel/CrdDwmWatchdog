@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package-release:
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Validate release version
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Tag must be stable SemVer (vMAJOR.MINOR.PATCH)."
+          }
+          [xml]$project = Get-Content .\CrdDwmWatchdog.csproj
+          $projectVersion = $project.Project.PropertyGroup.Version | Select-Object -First 1
+          if ($projectVersion -ne $version) {
+            throw "Tag version $version does not match project version $projectVersion."
+          }
+          "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Restore locked dependencies and tools
+        run: |
+          dotnet restore --locked-mode
+          dotnet tool restore
+
+      - name: Build and test
+        shell: pwsh
+        run: |
+          dotnet build -c Release --no-restore
+          dotnet .\bin\Release\net10.0-windows\win-x64\CrdDwmWatchdog.dll --self-test
+          dotnet .\bin\Release\net10.0-windows\win-x64\CrdDwmWatchdog.dll --dry-run-restart both
+
+      - name: Publish self-contained application
+        shell: pwsh
+        run: |
+          dotnet publish .\CrdDwmWatchdog.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            --no-restore `
+            -p:PublishSingleFile=false `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -p:Version=$env:RELEASE_VERSION `
+            -o .\artifacts\publish
+
+      - name: Test published application
+        shell: pwsh
+        run: |
+          dotnet .\artifacts\publish\CrdDwmWatchdog.dll --self-test
+          dotnet .\artifacts\publish\CrdDwmWatchdog.dll --dry-run-restart both
+
+      - name: Package with Velopack
+        shell: pwsh
+        run: |
+          dotnet vpk pack `
+            --packId CrdDwmWatchdog `
+            --packVersion $env:RELEASE_VERSION `
+            --packDir .\artifacts\publish `
+            --mainExe CrdDwmWatchdog.exe `
+            --packTitle "CRD and DWM Health Watchdog" `
+            --packAuthors "Matt Toegel" `
+            --runtime win-x64 `
+            --shortcuts StartMenuRoot `
+            --instLocation PerUser `
+            --outputDir .\artifacts\releases
+
+      - name: Verify package set
+        shell: pwsh
+        run: |
+          $required = @(
+            '.\artifacts\releases\CrdDwmWatchdog-win-Setup.exe',
+            '.\artifacts\releases\releases.win.json'
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path $path)) { throw "Missing release asset: $path" }
+          }
+          if (-not (Get-ChildItem .\artifacts\releases\CrdDwmWatchdog-*-full.nupkg)) {
+            throw 'Missing full Velopack package.'
+          }
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assets = Get-ChildItem .\artifacts\releases -File | ForEach-Object FullName
+          gh release create $env:GITHUB_REF_NAME @assets `
+            --verify-tag `
+            --generate-notes `
+            --title "CRD & DWM Health Watchdog $env:RELEASE_VERSION"
