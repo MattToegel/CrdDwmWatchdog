@@ -42,7 +42,7 @@ jobs:
 
       - name: Restore locked dependencies and tools
         run: |
-          dotnet restore --locked-mode
+          dotnet restore --locked-mode -r win-x64
           dotnet tool restore
 
       - name: Build and test

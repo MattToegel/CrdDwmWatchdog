@@ -12,9 +12,9 @@
     <Description>Monitors Chrome Remote Desktop and Desktop Window Manager and offers guarded, user-approved restarts.</Description>
     <Company>Matt Toegel</Company>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.2.0</Version>
-    <AssemblyVersion>0.2.0.0</AssemblyVersion>
-    <FileVersion>0.2.0.0</FileVersion>
+    <Version>0.2.1</Version>
+    <AssemblyVersion>0.2.1.0</AssemblyVersion>
+    <FileVersion>0.2.1.0</FileVersion>
     <RepositoryUrl>https://github.com/MattToegel/CrdDwmWatchdog</RepositoryUrl>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
